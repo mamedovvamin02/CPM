@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<title>-CPM Shop-</title>
+<style>
+body {font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:0;background:#f0f0f0;}
+.container {max-width:960px;background:rgba(255,255,255,0.95);padding:25px;margin:40px auto;border-radius:20px;box-shadow:0 20px 50px rgba(0,0,0,0.3);}
+.logo {font-size:42px;font-weight:bold;color:#27ae60;text-align:center;margin-bottom:10px;cursor:pointer;}
+.live-counter {text-align:center;font-weight:bold;color:#555;margin-bottom:10px;}
+input, button, select {width:100%;padding:12px;margin-top:12px;border-radius:10px;border:1px solid #ccc;font-size:16px;transition:0.3s;}
+input:focus, select:focus{border-color:#27ae60; outline:none;}
+button{border:none;cursor:pointer;font-weight:bold;transition:0.3s;}
+button:hover{opacity:0.85;}
+.car {background:#fafafa;padding:18px;margin-top:25px;border-radius:15px;box-shadow:0 12px 28px rgba(0,0,0,0.15);transform-style:preserve-3d;transition:transform 0.3s,box-shadow 0.3s,opacity 0.5s;}
+.car:hover{transform:translateY(-6px) scale(1.03);box-shadow:0 18px 38px rgba(0,0,0,0.3);}
+.slider{display:flex;overflow-x:auto;scroll-behavior:smooth;margin-top:12px;}
+.slider img{width:100px;height:70px;margin-right:10px;border-radius:10px;cursor:pointer;transition:0.3s;}
+.slider img:hover{transform:scale(1.1);}
+.delete-btn{background:red;padding:6px 12px;border-radius:8px;color:white;cursor:pointer;margin-top:5px;}
+.favorite-btn{background:linear-gradient(90deg,#f39c12,#f1c40f);padding:6px 12px;border-radius:8px;color:white;cursor:pointer;margin-top:5px;}
+.whatsapp{display:inline-block;margin-top:5px;color:white;font-weight:bold;text-decoration:none;width:auto;padding:6px 12px;background:linear-gradient(90deg,#2ecc71,#27ae60);border-radius:8px;}
+footer{margin-top:50px;padding:20px;text-align:center;background:#27ae60;color:white;border-radius:15px;font-size:16px;}
+footer a{color:white;text-decoration:none;margin:0 10px;font-weight:bold;}
+footer a:hover{opacity:0.85;}
+.holo {background: linear-gradient(120deg,#00f,#0ff,#f0f)!important;color:white!important;}
+@media(max-width:700px){.sort-btn{width:100%; margin-top:8px;}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="logo">CPM Shop</div>
+<div class="live-counter" id="liveCounter">?? Aktiv elan say?: 0</div>
+<p style="text-align:center;font-size:18px;">Kainat s?viyy?sind? Notepad CPM Shop</p>
+
+<select id="brand" onchange="updateModels()">
+<option value="">Marka se?</option>
+<option value="Toyota">Toyota</option>
+<option value="BMW">BMW</option>
+<option value="Mercedes">Mercedes</option>
+<option value="Ford">Ford</option>
+<option value="Honda">Honda</option>
+<option value="Lada">Lada</option>
+<option value="Mitsubishi">Mitsubishi</option>
+<option value="Kia">Kia</option>
+<option value="Hyundai">Hyundai</option>
+<option value="Dig?r">Dig?r</option>
+</select>
+<input type="text" id="brandOther" placeholder="Marka daxil edin" style="display:none;">
+<select id="model" disabled onchange="checkOtherModel()"><option value="">Model se?</option></select>
+<input type="text" id="modelOther" placeholder="Model daxil edin" style="display:none;">
+<input id="year" placeholder="Burax?l?? ili">
+<input id="price" placeholder="Qiym?t (AZN)">
+<input id="phone" placeholder="WhatsApp n?mr?si (994...)">
+<select id="category">
+<option value="">Kateqoriya se?</option>
+<option value="Sedan">Sedan</option>
+<option value="SUV">SUV</option>
+<option value="Pikap">Pikap</option>
+</select>
+<input type="file" id="images" accept="image/*" multiple>
+<button onclick="addCar()">Elan yerl??dir</button>
+<input class="search" id="search" placeholder="?? Model/Marka axtar" onkeyup="applyFilters()">
+<button onclick="voiceSearch()">?? S?s il? axtar</button>
+<div class="sort-container">
+<button class="sort-btn" onclick="sortCars('price')">Qiym?t? g?r?</button>
+<button class="sort-btn" onclick="sortCars('year')">?l? g?r?</button>
+</div>
+<h3>?? Elanlar</h3>
+<div id="cars"></div>
+</div>
+
+<div class="modal" id="modal" style="display:none;position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;">
+<span style="position:absolute;top:20px;right:30px;color:white;font-size:42px;cursor:pointer;" onclick="closeModal()">&times;</span>
+<img id="modal-img" style="display:block;max-width:90%;max-height:80%;margin:5% auto;border-radius:15px;">
+</div>
+
+<footer>
+<p>© 2026 CPM Shop | Developed by Amin M?mm?dov</p>
+<a href="https://www.tiktok.com/@amindii_o?_r=1&_t=ZS-93mdMMVwWHK" target="_blank">TikTok</a>
+<a href="https://wa.me/994XXXXXXXXX" target="_blank">WhatsApp</a>
+</footer>
+
+<script>
+let cars = JSON.parse(localStorage.getItem('cars')) || [];
+const brandModels = {"Toyota":["Corolla","Camry","RAV4","Land Cruiser"],"BMW":["X5","X3","320i","M3"],"Mercedes":["C-Class","E-Class","GLE","S-Class"],"Ford":["F-150","Mustang","Explorer","Focus"],"Honda":["Civic","Accord","CR-V","Pilot"],"Lada":["Vesta","Granta","Niva","Xray"],"Mitsubishi":["Lancer","Outlander","Pajero","ASX"],"Kia":["Rio","Cerato","Sportage","Sorento"],"Hyundai":["Elantra","Tucson","Santa Fe","Sonata"]};
+
+function updateModels(){const brand=document.getElementById("brand").value;const modelSelect=document.getElementById("model");const brandOther=document.getElementById("brandOther");brandOther.style.display=(brand==='Dig?r')?'block':'none';modelSelect.innerHTML='<option value="">Model se?</option>';if(!brand||brand==='Dig?r'){modelSelect.disabled=true;return;}brandModels[brand].forEach(m=>{const opt=document.createElement("option");opt.value=m;opt.text=m;modelSelect.appendChild(opt);});modelSelect.innerHTML+='<option value="Dig?r">Dig?r</option>';modelSelect.disabled=false;document.getElementById("modelOther").style.display='none';}
+function checkOtherModel(){const model=document.getElementById("model").value;document.getElementById("modelOther").style.display=(model==='Dig?r')?'block':'none';}
+
+function addCar(){
+  let brand=document.getElementById("brand").value;
+  let brandOther=document.getElementById("brandOther").value;
+  if(brand==='Dig?r') brand=brandOther||prompt("Marka daxil edin:");
+  let model=document.getElementById("model").value;
+  let modelOther=document.getElementById("modelOther").value;
+  if(model==='Dig?r') model=modelOther||prompt("Model daxil edin:");
+  let year=document.getElementById("year").value;
+  let price=document.getElementById("price").value;
+  let phone=document.getElementById("phone").value;
+  let category=document.getElementById("category").value;
+  let files=document.getElementById("images").files;
+  if(!brand||!model||!year||!price||!phone||!category||files.length===0){alert("B?t?n xanalar? doldurun v? ??kil se?in!"); return;}
+  let imgs=[];
+  for(let f of files){let reader=new FileReader();reader.onload=function(e){imgs.push(e.target.result);if(imgs.length===files.length){cars.push({brand,model,year,price,phone,imgs,category,favorite:false});localStorage.setItem('cars',JSON.stringify(cars));renderCars();confetti();clearForm();}};reader.readAsDataURL(f);}
+}
+
+function renderCars(){
+  let container=document.getElementById("cars");container.innerHTML="";
+  for(let i=cars.length-1;i>=0;i--){
+    let car=cars[i];
+    let div=document.createElement("div");
+    div.className="car";
+    div.innerHTML=`<b>${car.brand} ${car.model}</b> <span class="category-label category-${car.category}">${car.category}</span><br>Burax?l?? ili: ${car.year}<br>Qiym?t: ${car.price} AZN<br><div class="slider">`;
+    car.imgs.forEach(img=>{div.innerHTML+=`<img src="${img}" onclick="openModal('${img}')">`;});
+    div.innerHTML+='</div>';
+    div.innerHTML+=`<a class="whatsapp" target="_blank" href="https://wa.me/${car.phone}?text=Salam,%20${car.brand}%20${car.model}%20???n%20yaz?ram">?? WhatsApp</a>`;
+    div.innerHTML+=` <button class="delete-btn" onclick="deleteCar(${i})">Elan? sil</button>`;
+    div.innerHTML+=` <button class="favorite-btn" onclick="toggleFavorite(${i})">${car.favorite?'? Favorit':'? Favorit'}</button>`;
+    container.appendChild(div);
+  }
+  updateCounter();
+}
+
+function deleteCar(i){if(confirm("Silm?k ist?yirs?n?")){cars.splice(i,1);localStorage.setItem('cars',JSON.stringify(cars));renderCars();}}
+function toggleFavorite(i){cars[i].favorite=!cars[i].favorite;localStorage.setItem('cars',JSON.stringify(cars));renderCars();}
+function openModal(src){document.getElementById('modal').style.display='block';document.getElementById('modal-img').src=src;}
+function closeModal(){document.getElementById('modal').style.display='none';}
+function clearForm(){
+document.getElementById("brand").value="";document.getElementById("brandOther").value="";document.getElementById("brandOther").style.display='none';
+document.getElementById("model").value="";document.getElementById("model").disabled=true;document.getElementById("modelOther").value="";document.getElementById("modelOther").style.display='none';
+document.getElementById("year").value="";document.getElementById("price").value="";document.getElementById("phone").value="";document.getElementById("category").value="";document.getElementById("images").value="";
+}
+
+function applyFilters(){
+let value=document.getElementById("search").value.toLowerCase();
+let carDivs=document.getElementsByClassName("car");
+Array.from(carDivs).forEach((div,i)=>{div.style.display=(cars[cars.length-1-i].brand.toLowerCase().includes(value)||cars[cars.length-1-i].model.toLowerCase().includes(value))?"":"none";});
+}
+
+function sortCars(by){cars.sort((a,b)=>{if(by==='price')return parseFloat(a.price)-parseFloat(b.price);if(by==='year')return parseFloat(a.year)-parseFloat(b.year);});localStorage.setItem('cars',JSON.stringify(cars));renderCars();}
+
+function updateCounter(){document.getElementById("liveCounter").innerText="?? Aktiv elan say?: "+cars.length;}
+
+function voiceSearch(){
+  const rec=new (window.SpeechRecognition||window.webkitSpeechRecognition)();rec.lang="az-AZ";rec.start();
+  rec.onresult=e=>{document.getElementById("search").value=e.results[0][0].transcript;applyFilters();}
+}
+
+// Confetti effect
+function confetti(){for(let i=0;i<100;i++){let div=document.createElement("div");div.style.position="fixed";div.style.top=Math.random()*window.innerHeight+"px";div.style.left=Math.random()*window.innerWidth+"px";div.style.width="8px";div.style.height="8px";div.style.background=`hsl(${Math.random()*360},100%,50%)`;div.style.borderRadius="50%";div.style.zIndex=9999;document.body.appendChild(div);setTimeout(()=>{div.remove();},1000);}}
+
+let clicks=0;document.querySelector(".logo").onclick=()=>{clicks++;if(clicks===5){document.body.classList.toggle("holo");alert("?? HOLOGRAM MODE AKT?V!");clicks=0;};};
+
+renderCars();
+</script>
+</body>
+</html>
